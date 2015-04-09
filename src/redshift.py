@@ -1,31 +1,25 @@
 import re
 import os
+import time
 import signal
-from subprocess import Popen, PIPE
-from threading import Thread, Event
-from enum import Enum
+from subprocess import Popen, DEVNULL, PIPE
 
 
 class RedshiftHelper:
-    _brightness = (1, 0.5)
+    _brightness = (1, 0.9)
     _temp = (6500, 3500)
-    _location = (52.2, 15.5)
+    _location = (52.2, -30)
+    _process = None
+    _lastreload = None
 
     def __init__(self):
         self._name = str(Popen("redshift -V", shell=True, stdout=PIPE).stdout.read(), 'ascii')
-        self._stopflag = Event()
 
     def getinfo(self):
         if not self.isavailable():
             return None
-        params = ''
-        if self.brightness:
-            params += ' -b ' + _tocolonstr(self.brightness)
-        if self.temperature:
-            params += ' -t ' + _tocolonstr(self.temperature)
-        if self.location:
-            params += ' -l ' + _tocolonstr(self.location)
-        lines = Popen('redshift -p' + params, shell=True, stdout=PIPE).stdout.readlines()
+        params = self._genparams()
+        lines = Popen('redshift -p ' + params, shell=True, stdout=PIPE).stdout.readlines()
         info = []
         if len(lines) < 3:
             return None
@@ -47,10 +41,43 @@ class RedshiftHelper:
         return False
 
     def start(self):
-        RedshiftThread(self._stopflag, self.temperature, self.brightness, self.location).start()
+        if self._process:
+            return
+
+        Popen('killall redshift', shell=True, stderr=DEVNULL).wait()  # kill all running 'redshift' processes
+        self._load()
 
     def stop(self):
-        self._stopflag.set()
+        if self._process:
+            self._kill()
+            self._reset()
+            self._process = None
+
+    @staticmethod
+    def _reset():
+        """Reset the screen"""
+        Popen('redshift -x', shell=True)  # reset screen
+
+    def _kill(self):
+        """End the process without removing screen settings"""
+        if self._process:
+            os.killpg(self._process.pid, signal.SIGKILL)
+
+    def _load(self, fading=False):
+        cmd = 'redshift '
+        if not fading:
+            cmd += '-r '
+        params = self._genparams()
+        self._process = Popen(cmd + params, shell=True, preexec_fn=os.setsid, stdout=DEVNULL)
+
+    def _reload(self):
+        if self._lastreload and time.time() - self._lastreload < 0.01:
+            return
+        if not self._process:
+            return
+        self._kill()
+        self._load()
+        self._lastreload = time.time()
 
     @property
     def brightness(self):
@@ -58,7 +85,10 @@ class RedshiftHelper:
 
     @brightness.setter
     def brightness(self, value):
+        if self.brightness == value:
+            return
         self._brightness = self._totuple(value)
+        self._reload()
 
     @property
     def temperature(self):
@@ -66,7 +96,10 @@ class RedshiftHelper:
 
     @temperature.setter
     def temperature(self, value):
+        if self.temperature == value:
+            return
         self._temp = self._totuple(value)
+        self._reload()
 
     @property
     def location(self):
@@ -74,7 +107,23 @@ class RedshiftHelper:
 
     @location.setter
     def location(self, value):
+        if self.location == value:
+            return
         self._location = self._totuple(value)
+        self._reload()
+
+    def _genparams(self):
+        def tocolonstr(x):
+            return '{}:{}'.format(x[0], x[1])
+
+        params = ''
+        if self.brightness:
+            params += ' -b ' + tocolonstr(self.brightness)
+        if self.temperature:
+            params += ' -t ' + tocolonstr(self.temperature)
+        if self.location:
+            params += ' -l ' + tocolonstr(self.location)
+        return params.strip()
 
     @staticmethod
     def _totuple(x):
@@ -82,38 +131,5 @@ class RedshiftHelper:
             return x
         if isinstance(x, list):
             return tuple(x)
-        x = int(x)
+        x = float(x)
         return x, x
-
-
-class EndSignal:
-    KEEP = 9  # SIGKILL
-    FADE = 15  # SIGTERM
-    SOLID = 9
-
-
-class RedshiftThread(Thread):
-    def __init__(self, event, temperature, brightness, location, endsig=EndSignal.KEEP):
-        Thread.__init__(self)
-        self.stopped = event
-        """@type: Event"""
-        self.params = ""
-        if temperature:
-            self.params += ' -t ' + _tocolonstr(temperature)
-        if brightness:
-            self.params += ' -b ' + _tocolonstr(brightness)
-        if location:
-            self.params += ' -l ' + _tocolonstr(location)
-        self.endsig = endsig
-
-    def run(self):
-        prog = Popen('redshift ' + self.params, shell=True, preexec_fn=os.setsid)
-        self.stopped.wait()
-
-        os.killpg(prog.pid, self.endsig)
-        if self.endsig == EndSignal.SOLID:
-            Popen('redshift -x', shell=True)
-
-
-def _tocolonstr(x):
-    return '{}:{}'.format(x[0], x[1])

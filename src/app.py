@@ -1,12 +1,10 @@
 from gi.repository import Gdk, Gio, GLib, Gtk
 import sys
-import os
 from redshift import RedshiftHelper
 from threading import Thread, Event
 
 
 class RedshiftApp(Gtk.Application):
-    is_enabled = None
     update_stopflag = Event()
 
     def __init__(self, redshifthelper):
@@ -40,7 +38,6 @@ class RedshiftApp(Gtk.Application):
         # TODO: add toggling event handler
         headerbar.pack_start(enabled_bt)
 
-        self.is_enabled = enabled_bt.get_active
         hbox = Gtk.HBox(spacing=5)
         location_bt = Gtk.Button.new_from_icon_name('find-location-symbolic', Gtk.IconSize.BUTTON)
         menu_bt = Gtk.MenuButton()
@@ -65,7 +62,6 @@ class RedshiftApp(Gtk.Application):
         self.build_headerbar()
 
         UpdateThread(self.update_stopflag, self.builder, self.helper, ).start()
-        self.helper.start()
         self.window.show_all()
 
     def do_startup(self):
@@ -80,20 +76,67 @@ class RedshiftApp(Gtk.Application):
         self.update_stopflag.set()
         Gtk.main_quit()
 
-    def on_enabledbt_toggled(self, *args):
-        pass
+    def on_enabledbt_toggled(self, button: Gtk.ToggleButton):
+        if button.get_active():
+            self.helper.start()
+        else:
+            self.helper.stop()
 
-    def on_autotempradio_toggled(self, *args):
-        pass
+    def on_autotempradio_toggled(self, button: Gtk.RadioButton):
+        active = button.get_active()
+        self.builder.get_object('autotempgrid').set_sensitive(active)
+        if active:
+            dayadj = self.builder.get_object('daytempadj')
+            nightadj = self.builder.get_object('nighttempadj')
+            self.helper.temperature = (dayadj.get_value(), nightadj.get_value())
 
-    def on_fixedbrightradio_toggled(self, *args):
-        pass
+    def on_fixedtempradio_toggled(self, button):
+        active = button.get_active()
+        self.builder.get_object('fixedtempscale').set_sensitive(active)
+        if active:
+            adj = self.builder.get_object('fixedtempadj')
+            self.helper.temperature = adj.get_value()
 
-    def on_autobrightradio_toggled(self, *args):
-        pass
+    def on_autobrightradio_toggled(self, button):
+        active = button.get_active()
+        self.builder.get_object('autobrightgrid').set_sensitive(active)
+        if active:
+            dayadj = self.builder.get_object('daybrightadj')
+            nightadj = self.builder.get_object('nightbrightadj')
+            self.helper.brightness = (dayadj.get_value() / 100, nightadj.get_value() / 100)
 
-    def on_fixedtempradio_toggled(self, *args):
-        pass
+    def on_fixedbrightradio_toggled(self, button):
+        active = button.get_active()
+        self.builder.get_object('fixedbrightscale').set_sensitive(active)
+        if active:
+            adj = self.builder.get_object('fixedbrightadj')
+            self.helper.brightness = adj.get_value() / 100
+
+    def on_daytempadj_value_changed(self, adjustment):
+        self.helper.temperature = (adjustment.get_value(), self.helper.temperature[1])
+
+    def on_nighttempadj_value_changed(self, adjustment):
+        self.helper.temperature = (self.helper.temperature[0], adjustment.get_value())
+
+    def on_fixedtempadj_value_changed(self, adjustment):
+        self.helper.temperature = adjustment.get_value()
+
+    def on_daybrightadj_value_changed(self, adjustment):
+        self.helper.brightness = (adjustment.get_value() / 100, self.helper.brightness[1])
+
+    def on_nightbrightadj_value_changed(self, adjustment):
+        self.helper.brightness = (self.helper.brightness[0], adjustment.get_value() / 100)
+
+    def on_fixedbrightadj_value_changed(self, adjustment):
+        self.helper.brightness = adjustment.get_value() / 100
+
+    @staticmethod
+    def on_tempscales_format_value(scale, value):
+        return str(int(value)) + "K"
+
+    @staticmethod
+    def on_brightscales_format_value(scale, value):
+        return str(int(value)) + "%"
 
     def on_about(self, *args):
         about = AboutDialog(self.helper)
@@ -108,6 +151,11 @@ class UpdateThread(Thread):
         self.stopped = event
         self.builder = builder
         self.helper = redshifthelper
+        self.labels = (
+            self.builder.get_object('periodlabel'),
+            self.builder.get_object('colortemplabel'),
+            self.builder.get_object('brightnesslabel')
+        )
 
     def run(self):
         self.update()
@@ -116,15 +164,10 @@ class UpdateThread(Thread):
 
     def update(self):
         info = self.helper.getinfo()
-        labels = (
-            self.builder.get_object('periodlabel'),
-            self.builder.get_object('colortemplabel'),
-            self.builder.get_object('brightnesslabel')
-        )
         Gdk.threads_enter()
-        labels[0].set_markup(info[0])
-        labels[1].set_markup('Color temperature: ' + info[1])
-        labels[2].set_markup('Brightness: ' + str(int(float(info[2]) * 100)) + '%')
+        self.labels[0].set_markup(info[0])
+        self.labels[1].set_markup('Color temperature: ' + info[1])
+        self.labels[2].set_markup('Brightness: ' + str(int(float(info[2]) * 100)) + '%')
         Gdk.threads_leave()
 
 
@@ -139,13 +182,17 @@ class AboutDialog(Gtk.AboutDialog):
         self.set_authors(["Adam Rutkowski <a_rutkowski@outlook.com>"])
         self.set_destroy_with_parent(True)
 
+
+class NoRedshiftDialog(Gtk.MessageDialog):
+    def __init__(self):
+        Gtk.MessageDialog.__init__(self, type=Gtk.MessageType.ERROR, buttons=Gtk.ButtonsType.OK)
+        self.set_title("Redshift Settings")
+        self.set_markup("Cannot find <i>redshift</i>! Program will be terminated.")
+
 if __name__ == '__main__':
     redshift = RedshiftHelper()
     if not redshift.isavailable():
-        msg = Gtk.MessageDialog(type=Gtk.MessageType.ERROR, buttons=Gtk.ButtonsType.OK)
-        msg.set_title("Redshift Settings")
-        msg.set_markup("Cannot find <i>redshift</i>! Program will be terminated.")
-        msg.run()
+        NoRedshiftDialog().run()
         sys.exit()
     app = RedshiftApp(redshift)
     exit_status = app.run(sys.argv)

@@ -35,13 +35,15 @@ Author: Adam Rutkowski <a_rutkowski@outlook.com>
     <property name="value">100</property>
     <property name="step_increment">1</property>
     <property name="page_increment">10</property>
+    <signal name="value-changed" handler="on_daybrightadj_value_changed" swapped="no"/>
   </object>
   <object class="GtkAdjustment" id="daytempadj">
     <property name="lower">1000</property>
     <property name="upper">6500</property>
-    <property name="value">5500</property>
+    <property name="value">6500</property>
     <property name="step_increment">100</property>
     <property name="page_increment">1000</property>
+    <signal name="value-changed" handler="on_daytempadj_value_changed" swapped="no"/>
   </object>
   <object class="GtkAdjustment" id="fixedbrightadj">
     <property name="lower">10</property>
@@ -49,6 +51,7 @@ Author: Adam Rutkowski <a_rutkowski@outlook.com>
     <property name="value">80</property>
     <property name="step_increment">1</property>
     <property name="page_increment">10</property>
+    <signal name="value-changed" handler="on_fixedbrightadj_value_changed" swapped="no"/>
   </object>
   <object class="GtkAdjustment" id="fixedtempadj">
     <property name="lower">1000</property>
@@ -56,13 +59,15 @@ Author: Adam Rutkowski <a_rutkowski@outlook.com>
     <property name="value">5500</property>
     <property name="step_increment">100</property>
     <property name="page_increment">1000</property>
+    <signal name="value-changed" handler="on_fixedtempadj_value_changed" swapped="no"/>
   </object>
   <object class="GtkAdjustment" id="nightbrightadj">
     <property name="lower">10</property>
     <property name="upper">100</property>
-    <property name="value">100</property>
+    <property name="value">90</property>
     <property name="step_increment">1</property>
     <property name="page_increment">10</property>
+    <signal name="value-changed" handler="on_nightbrightadj_value_changed" swapped="no"/>
   </object>
   <object class="GtkAdjustment" id="nighttempadj">
     <property name="lower">1000</property>
@@ -70,6 +75,7 @@ Author: Adam Rutkowski <a_rutkowski@outlook.com>
     <property name="value">3500</property>
     <property name="step_increment">100</property>
     <property name="page_increment">1000</property>
+    <signal name="value-changed" handler="on_nighttempadj_value_changed" swapped="no"/>
   </object>
   <object class="GtkWindow" id="window">
     <property name="width_request">480</property>
@@ -184,7 +190,7 @@ Author: Adam Rutkowski <a_rutkowski@outlook.com>
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkGrid" id="grid5">
+                  <object class="GtkGrid" id="autotempgrid">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <property name="margin_left">25</property>
@@ -224,6 +230,7 @@ Author: Adam Rutkowski <a_rutkowski@outlook.com>
                         <property name="round_digits">0</property>
                         <property name="digits">0</property>
                         <property name="value_pos">right</property>
+                        <signal name="format-value" handler="on_tempscales_format_value" swapped="no"/>
                       </object>
                       <packing>
                         <property name="left_attach">1</property>
@@ -241,6 +248,7 @@ Author: Adam Rutkowski <a_rutkowski@outlook.com>
                         <property name="round_digits">0</property>
                         <property name="digits">0</property>
                         <property name="value_pos">right</property>
+                        <signal name="format-value" handler="on_tempscales_format_value" swapped="no"/>
                       </object>
                       <packing>
                         <property name="left_attach">1</property>
@@ -272,8 +280,9 @@ Author: Adam Rutkowski <a_rutkowski@outlook.com>
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkScale" id="scale6">
+                  <object class="GtkScale" id="fixedtempscale">
                     <property name="visible">True</property>
+                    <property name="sensitive">False</property>
                     <property name="can_focus">True</property>
                     <property name="margin_left">25</property>
                     <property name="hexpand">True</property>
@@ -281,6 +290,7 @@ Author: Adam Rutkowski <a_rutkowski@outlook.com>
                     <property name="round_digits">0</property>
                     <property name="digits">0</property>
                     <property name="value_pos">right</property>
+                    <signal name="format-value" handler="on_tempscales_format_value" swapped="no"/>
                   </object>
                   <packing>
                     <property name="expand">False</property>
@@ -326,7 +336,7 @@ Author: Adam Rutkowski <a_rutkowski@outlook.com>
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkGrid" id="grid3">
+                  <object class="GtkGrid" id="autobrightgrid">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <property name="margin_left">25</property>
@@ -366,6 +376,7 @@ Author: Adam Rutkowski <a_rutkowski@outlook.com>
                         <property name="round_digits">0</property>
                         <property name="digits">0</property>
                         <property name="value_pos">right</property>
+                        <signal name="format-value" handler="on_brightscales_format_value" swapped="no"/>
                       </object>
                       <packing>
                         <property name="left_attach">1</property>
@@ -383,6 +394,7 @@ Author: Adam Rutkowski <a_rutkowski@outlook.com>
                         <property name="round_digits">0</property>
                         <property name="digits">0</property>
                         <property name="value_pos">right</property>
+                        <signal name="format-value" handler="on_brightscales_format_value" swapped="no"/>
                       </object>
                       <packing>
                         <property name="left_attach">1</property>
@@ -414,8 +426,9 @@ Author: Adam Rutkowski <a_rutkowski@outlook.com>
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkScale" id="scale3">
+                  <object class="GtkScale" id="fixedbrightscale">
                     <property name="visible">True</property>
+                    <property name="sensitive">False</property>
                     <property name="can_focus">True</property>
                     <property name="margin_left">25</property>
                     <property name="hexpand">True</property>
@@ -423,6 +436,7 @@ Author: Adam Rutkowski <a_rutkowski@outlook.com>
                     <property name="round_digits">0</property>
                     <property name="digits">0</property>
                     <property name="value_pos">right</property>
+                    <signal name="format-value" handler="on_brightscales_format_value" swapped="no"/>
                   </object>
                   <packing>
                     <property name="expand">False</property>
