@@ -1,5 +1,6 @@
 from gi.repository import Gdk, Gio, GLib, Gtk
 import sys
+import re
 from redshift import RedshiftHelper
 from threading import Thread, Event
 
@@ -23,7 +24,7 @@ class RedshiftApp(Gtk.Application):
         styleprovider.load_from_path('ui.css')
         Gtk.StyleContext.add_provider_for_screen(Gdk.Screen.get_default(),
             styleprovider,
-            Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
+            Gtk.STYLE_PROVIDER_PRIORITY_USER)
 
     def build_headerbar(self):
         headerbar = Gtk.HeaderBar()
@@ -40,6 +41,8 @@ class RedshiftApp(Gtk.Application):
 
         hbox = Gtk.HBox(spacing=5)
         location_bt = Gtk.Button.new_from_icon_name('find-location-symbolic', Gtk.IconSize.BUTTON)
+        """@type: Gtk.Button"""
+        location_bt.connect('clicked', self.on_locationbt_clicked)
         menu_bt = Gtk.MenuButton()
         menuimage = Gtk.Image()
         menuimage.set_from_icon_name('open-menu-symbolic', Gtk.IconSize.BUTTON)
@@ -81,6 +84,35 @@ class RedshiftApp(Gtk.Application):
             self.helper.start()
         else:
             self.helper.stop()
+
+    def on_locationbt_clicked(self, button):
+        dialog = LocationDialog(self.window)
+        dialog.connect('response', self.on_locationdialog_response)
+        dialog.run()
+
+    def on_locationdialog_response(self, dialog, response):
+        def get_entry_value(entry):
+            if not re.match(r'^[-+]?\d*(?:\.|,)?\d+$', entry.get_text()):
+                msg_dialog = Gtk.MessageDialog(self.window, type=Gtk.MessageType.ERROR, buttons=Gtk.ButtonsType.OK)
+                if entry.get_text():
+                    msg_dialog.set_markup("Invalid value: " + entry.get_text())
+                else:
+                    msg_dialog.set_markup("Fields cannot be empty!")
+                msg_dialog.set_title("Error")
+                msg_dialog.run()
+                msg_dialog.destroy()
+            else:
+                return float(entry.get_text())
+
+        if response == Gtk.ResponseType.OK:
+            lat = get_entry_value(dialog.latentry)
+            if lat:
+                lon = get_entry_value(dialog.lonentry)
+            if lat and lon:
+                self.helper.location = (lat, lon)
+                dialog.destroy()
+        else:
+            dialog.destroy()
 
     def on_autotempradio_toggled(self, button: Gtk.RadioButton):
         active = button.get_active()
@@ -139,8 +171,7 @@ class RedshiftApp(Gtk.Application):
         return str(int(value)) + "%"
 
     def on_about(self, *args):
-        about = AboutDialog(self.helper)
-        about.set_transient_for(self.window)
+        about = AboutDialog(self.helper, self.window)
         about.run()
         about.destroy()
 
@@ -172,8 +203,8 @@ class UpdateThread(Thread):
 
 
 class AboutDialog(Gtk.AboutDialog):
-    def __init__(self, helper):
-        Gtk.AboutDialog.__init__(self)
+    def __init__(self, helper, parent=None):
+        Gtk.AboutDialog.__init__(self, parent=parent)
         self.set_version('0.1\n' + helper.getname())
         self.set_logo_icon_name('redshift')
         self.set_website('https://github.com/ruci00/redshift-gui')
@@ -181,6 +212,30 @@ class AboutDialog(Gtk.AboutDialog):
         self.set_license_type(Gtk.License.GPL_2_0)
         self.set_authors(["Adam Rutkowski <a_rutkowski@outlook.com>"])
         self.set_destroy_with_parent(True)
+
+
+class LocationDialog(Gtk.Dialog):
+    def __init__(self, parent=None):
+        Gtk.Dialog.__init__(self, title="Set location", parent=parent, use_header_bar=True)
+        grid = Gtk.Grid()
+        grid.set_column_spacing(5)
+        grid.set_row_spacing(5)
+        grid.set_border_width(10)
+
+        latlabel = Gtk.Label("Latitude:")
+        grid.add(latlabel)
+        self.latentry = Gtk.Entry()
+        # self.latentry.connect('insert-text', self.on_lonlatentries_inserttext)
+        grid.attach(self.latentry, 1, 0, 1, 1)
+        lonlabel = Gtk.Label("Longitude:")
+        grid.attach(lonlabel, 2, 0, 1, 1)
+        self.lonentry = Gtk.Entry()
+        # self.lonentry.connect('changed', self.on_lonentry_changed)
+        grid.attach(self.lonentry, 3, 0, 1, 1)
+        self.add_buttons(Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
+                         Gtk.STOCK_OK, Gtk.ResponseType.OK)
+        self.get_content_area().add(grid)
+        self.show_all()
 
 
 class NoRedshiftDialog(Gtk.MessageDialog):

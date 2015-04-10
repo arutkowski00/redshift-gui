@@ -2,3 +2,8 @@
     font-size: 22px;
     font-weight: 700;
 }
+
+GtkEntry.invalid {
+    background: red;
+    background-color: red;
+}
