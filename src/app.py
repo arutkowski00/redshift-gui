@@ -92,7 +92,7 @@ class RedshiftApp(Gtk.Application):
 
     def on_locationdialog_response(self, dialog, response):
         def get_entry_value(entry):
-            if not re.match(r'^[-+]?\d*(?:\.|,)?\d+$', entry.get_text()):
+            if not re.match(r'^[-+]?\d*\.?\d+$', entry.get_text()):
                 msg_dialog = Gtk.MessageDialog(self.window, type=Gtk.MessageType.ERROR, buttons=Gtk.ButtonsType.OK)
                 if entry.get_text():
                     msg_dialog.set_markup("Invalid value: " + entry.get_text())
