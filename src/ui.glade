@@ -96,13 +96,13 @@ Author: Adam Rutkowski <a_rutkowski@outlook.com>
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="hexpand">True</property>
+            <property name="row_spacing">5</property>
             <property name="column_spacing">10</property>
             <child>
               <object class="GtkImage" id="daytimeimage">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="xpad">15</property>
-                <property name="ypad">10</property>
+                <property name="xpad">5</property>
                 <property name="pixel_size">64</property>
                 <property name="icon_name">weather-clear</property>
                 <property name="icon_size">6</property>
@@ -178,7 +178,7 @@ Author: Adam Rutkowski <a_rutkowski@outlook.com>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">False</property>
-                    <property name="xalign">0</property>
+                    <property name="xalign">0.5</property>
                     <property name="active">True</property>
                     <property name="draw_indicator">True</property>
                     <signal name="toggled" handler="on_autotempradio_toggled" swapped="no"/>
@@ -193,7 +193,6 @@ Author: Adam Rutkowski <a_rutkowski@outlook.com>
                   <object class="GtkGrid" id="autotempgrid">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
-                    <property name="margin_left">25</property>
                     <property name="hexpand">True</property>
                     <property name="row_spacing">2</property>
                     <property name="column_spacing">5</property>
@@ -268,7 +267,7 @@ Author: Adam Rutkowski <a_rutkowski@outlook.com>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">False</property>
-                    <property name="xalign">0</property>
+                    <property name="xalign">0.5</property>
                     <property name="draw_indicator">True</property>
                     <property name="group">autotempradio</property>
                     <signal name="toggled" handler="on_fixedtempradio_toggled" swapped="no"/>
@@ -284,7 +283,6 @@ Author: Adam Rutkowski <a_rutkowski@outlook.com>
                     <property name="visible">True</property>
                     <property name="sensitive">False</property>
                     <property name="can_focus">True</property>
-                    <property name="margin_left">25</property>
                     <property name="hexpand">True</property>
                     <property name="adjustment">fixedtempadj</property>
                     <property name="round_digits">0</property>
@@ -324,7 +322,7 @@ Author: Adam Rutkowski <a_rutkowski@outlook.com>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">False</property>
-                    <property name="xalign">0</property>
+                    <property name="xalign">0.5</property>
                     <property name="active">True</property>
                     <property name="draw_indicator">True</property>
                     <signal name="toggled" handler="on_autobrightradio_toggled" swapped="no"/>
@@ -339,7 +337,6 @@ Author: Adam Rutkowski <a_rutkowski@outlook.com>
                   <object class="GtkGrid" id="autobrightgrid">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
-                    <property name="margin_left">25</property>
                     <property name="hexpand">True</property>
                     <property name="row_spacing">2</property>
                     <property name="column_spacing">5</property>
@@ -414,7 +411,7 @@ Author: Adam Rutkowski <a_rutkowski@outlook.com>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">False</property>
-                    <property name="xalign">0</property>
+                    <property name="xalign">0.5</property>
                     <property name="draw_indicator">True</property>
                     <property name="group">autobrightradio</property>
                     <signal name="toggled" handler="on_fixedbrightradio_toggled" swapped="no"/>
@@ -430,7 +427,6 @@ Author: Adam Rutkowski <a_rutkowski@outlook.com>
                     <property name="visible">True</property>
                     <property name="sensitive">False</property>
                     <property name="can_focus">True</property>
-                    <property name="margin_left">25</property>
                     <property name="hexpand">True</property>
                     <property name="adjustment">fixedbrightadj</property>
                     <property name="round_digits">0</property>

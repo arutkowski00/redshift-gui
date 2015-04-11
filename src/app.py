@@ -87,6 +87,8 @@ class RedshiftApp(Gtk.Application):
 
     def on_locationbt_clicked(self, button):
         dialog = LocationDialog(self.window)
+        dialog.latentry.set_text(str(self.helper.location[0]))
+        dialog.lonentry.set_text(str(self.helper.location[1]))
         dialog.connect('response', self.on_locationdialog_response)
         dialog.run()
 
@@ -106,9 +108,10 @@ class RedshiftApp(Gtk.Application):
 
         if response == Gtk.ResponseType.OK:
             lat = get_entry_value(dialog.latentry)
+            lon = None
             if lat:
                 lon = get_entry_value(dialog.lonentry)
-            if lat and lon:
+            if lon:
                 self.helper.location = (lat, lon)
                 dialog.destroy()
         else:
@@ -217,6 +220,7 @@ class AboutDialog(Gtk.AboutDialog):
 class LocationDialog(Gtk.Dialog):
     def __init__(self, parent=None):
         Gtk.Dialog.__init__(self, title="Set location", parent=parent, use_header_bar=True)
+        self.set_modal(True)
         grid = Gtk.Grid()
         grid.set_column_spacing(5)
         grid.set_row_spacing(5)
@@ -232,8 +236,8 @@ class LocationDialog(Gtk.Dialog):
         self.lonentry = Gtk.Entry()
         # self.lonentry.connect('changed', self.on_lonentry_changed)
         grid.attach(self.lonentry, 3, 0, 1, 1)
-        self.add_buttons(Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
-                         Gtk.STOCK_OK, Gtk.ResponseType.OK)
+        self.add_buttons("Cancel", Gtk.ResponseType.CANCEL,
+                         "Save", Gtk.ResponseType.OK)
         self.get_content_area().add(grid)
         self.show_all()
 
